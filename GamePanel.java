@@ -2,59 +2,41 @@ import java.awt.*;
 import java.awt.event.*;
 import javax.swing.*;
 import java.util.Random;
- 
+
+/**
+ * The GamePanel class ensures functionality och visualisation of the game.
+ *
+ * @author Lukas Mannerstål
+ * @version 2024-11-30
+ * @credits The base model of the game took inspiration from: https://youtu.be/bI6e6qjJ8JQ
+ */
 public class GamePanel extends JPanel implements ActionListener {
 
-    static final int SCREEN_WIDTH = 600;
-    static final int SCREEN_HEIGHT = 600;
-    static final int UNIT_SIZE = 25;
+    /**
+     * Constants
+     */
+    static final int SCREEN_WIDTH = 900;
+    static final int SCREEN_HEIGHT = 900;
+    static final int UNIT_SIZE = 30;
     static final int GAME_UNITS = (SCREEN_WIDTH * SCREEN_HEIGHT) / UNIT_SIZE;
     static final int DELAY = 75;
+
+    /**
+     * Snake parts
+     */
     final int x[] = new int[GAME_UNITS];
     final int y[] = new int[GAME_UNITS];
-    private int bodyParts = 6;
-    private int applesEaten;
-    private int appleX;
-    private int appleY;
-    char direction = 'R';
-    boolean running = false;
+
+    /**
+     * Instances
+     */
     Timer timer;
     Random random;
-
-    public int getBodyParts() {
-        return bodyParts;
-    }
-
-    public void setBodyParts(int bodyParts) {
-        this.bodyParts = bodyParts;
-    }
-
-    public int getApplesEaten() {
-        return applesEaten;
-    }
-
-    public void setApplesEaten(int applesEaten) {
-        this.applesEaten = applesEaten;
-    }
-
-    public int getAppleX() {
-        return appleX;
-    }
-
-    public void setAppleX(int appleX) {
-        this.appleX = appleX;
-    }
-
-    public int getAppleY() {
-        return appleY;
-    }
-
-    public void setAppleY(int appleY) {
-        this.appleY = appleY;
-    }
+    GameState state;
 
     GamePanel() {
         random = new Random();
+        state = new GameState();
         this.setPreferredSize(new Dimension(SCREEN_WIDTH, SCREEN_HEIGHT));
         this.setBackground(Color.black);
         this.setFocusable(true);
@@ -64,7 +46,7 @@ public class GamePanel extends JPanel implements ActionListener {
 
     public void startGame() {
         newApple();
-        running = true;
+        state.setRunning(true);
         timer = new Timer(DELAY, this);
         timer.start();
     }
@@ -75,15 +57,11 @@ public class GamePanel extends JPanel implements ActionListener {
     }
 
     public void draw(Graphics g) {
-        if(running) {
-            for (int i = 0; i < SCREEN_HEIGHT / UNIT_SIZE; i++) {
-                g.drawLine(i * UNIT_SIZE, 0, i * UNIT_SIZE, SCREEN_HEIGHT);
-                g.drawLine(0, i * UNIT_SIZE, SCREEN_WIDTH, i * UNIT_SIZE);
-            }
+        if(state.getRunning()) {
             g.setColor(Color.red);
-            g.fillOval(this.getAppleX(), this.getAppleY(), UNIT_SIZE, UNIT_SIZE);
+            g.fillRect(state.getAppleX(), state.getAppleY(), UNIT_SIZE, UNIT_SIZE);
 
-            for (int i = 0; i < this.getBodyParts(); i++) {
+            for (int i = 0; i < state.getBodyParts(); i++) {
                 if (i == 0) {
                     g.setColor(Color.green);
                     g.fillRect(x[i], y[i], UNIT_SIZE, UNIT_SIZE);
@@ -98,17 +76,17 @@ public class GamePanel extends JPanel implements ActionListener {
     }
 
     public void newApple() {
-        this.setAppleX(random.nextInt((int) (SCREEN_WIDTH / UNIT_SIZE)) * UNIT_SIZE);
-        this.setAppleY(random.nextInt((int) (SCREEN_HEIGHT / UNIT_SIZE)) * UNIT_SIZE);
+        state.setAppleX(random.nextInt((int) (SCREEN_WIDTH / UNIT_SIZE)) * UNIT_SIZE);
+        state.setAppleY(random.nextInt((int) (SCREEN_HEIGHT / UNIT_SIZE)) * UNIT_SIZE);
     }
 
     public void move() {
-        for (int i = this.getBodyParts(); i > 0; i--) {
+        for (int i = state.getBodyParts(); i > 0; i--) {
             x[i] = x[i - 1];
             y[i] = y[i - 1];
         }
 
-        switch (direction) {
+        switch (state.getDirection()) {
             case 'U':
                 y[0] = y[0] - UNIT_SIZE;
                 break;
@@ -125,37 +103,37 @@ public class GamePanel extends JPanel implements ActionListener {
     }
 
     public void checkApple() {
-        if((x[0] == this.getAppleX()) && (y[0] == this.getAppleY())) {
-            this.setBodyParts(this.getBodyParts() + 1);
-            this.setApplesEaten(this.getApplesEaten() + 1);
+        if((x[0] == state.getAppleX()) && (y[0] == state.getAppleY())) {
+            state.setBodyParts(state.getBodyParts() + 1);
+            state.setApplesEaten(state.getApplesEaten() + 1);
             newApple();
         }
     }
 
     public void checkCollisions() {
-        for (int i = this.getBodyParts(); i > 0; i--) {
+        for (int i = state.getBodyParts(); i > 0; i--) {
             if ((x[0] == x[i]) && (y[0] == y[i])) {
-                running = false;
+                state.setRunning(false);
             }
         }
 
         if (x[0] < 0 || x[0] > SCREEN_WIDTH || y[0] < 0 || y[0] > SCREEN_HEIGHT) {
-            running = false;
+            state.setRunning(false);
         }
 
-        if (!running) {
+        if (!state.getRunning()) {
             timer.stop();
         }
     }
 
     public void gameOver(Graphics g) {
-
+        System.exit(0);
     }
 
     @Override
     public void actionPerformed(ActionEvent e) {
 
-        if (running) {
+        if (state.getRunning()) {
             move();
             checkApple();
             checkCollisions();
@@ -168,20 +146,20 @@ public class GamePanel extends JPanel implements ActionListener {
         public void keyPressed(KeyEvent e) {
             switch (e.getKeyCode()) {
                 case KeyEvent.VK_LEFT:
-                    if (direction != 'R')
-                        direction = 'L';
+                    if (state.getDirection() != 'R')
+                        state.setDirection('L');
                     break;
                 case KeyEvent.VK_RIGHT:
-                    if (direction != 'L')
-                        direction = 'R';
+                    if (state.getDirection() != 'L')
+                        state.setDirection('R');
                     break;
                 case KeyEvent.VK_UP:
-                    if (direction != 'D')
-                        direction = 'U';
+                    if (state.getDirection() != 'D')
+                        state.setDirection('U');
                     break;
                 case KeyEvent.VK_DOWN:
-                    if (direction != 'U')
-                        direction = 'D';
+                    if (state.getDirection() != 'U')
+                        state.setDirection('D');
                     break;
                 default:
                     break;
