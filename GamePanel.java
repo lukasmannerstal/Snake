@@ -19,7 +19,7 @@ public class GamePanel extends JPanel implements ActionListener {
      */
     static final int SCREEN_WIDTH = 900;
     static final int SCREEN_HEIGHT = 900;
-    static final int UNIT_SIZE = 30;
+    static final int UNIT_SIZE = 15;
     static final int GAME_UNITS = (SCREEN_WIDTH * SCREEN_HEIGHT) / UNIT_SIZE;
     static final int DELAY = 75;
 
@@ -35,6 +35,7 @@ public class GamePanel extends JPanel implements ActionListener {
     Timer timer;
     Random random;
     GameState state;
+    AI ai;
 
     /**
      * Colors
@@ -59,6 +60,7 @@ public class GamePanel extends JPanel implements ActionListener {
         newApples(5);
         state.setRunning(true);
         timer = new Timer(DELAY, this);
+        ai = new AI();
         timer.start();
     }
 
@@ -68,6 +70,7 @@ public class GamePanel extends JPanel implements ActionListener {
     }
 
     public void draw(Graphics g) {
+        updateDirection();
         if (state.getRunning()) {
             g.setColor(APPLE_COLOR);
             for (int[] apple : state.getApples().values()) {
@@ -90,8 +93,8 @@ public class GamePanel extends JPanel implements ActionListener {
 
     public void resetSnake() {
         for (int i = 0; i < state.getBodyParts(); i++) {
-            x[i] = 0;
-            y[i] = 0;
+            x[i] = SCREEN_WIDTH / 2;
+            y[i] = SCREEN_HEIGHT / 2;
         }
     }
 
@@ -155,7 +158,7 @@ public class GamePanel extends JPanel implements ActionListener {
             }
         }
 
-        if (x[0] < 0 || x[0] > SCREEN_WIDTH || y[0] < 0 || y[0] > SCREEN_HEIGHT) {
+        if (x[0] < 0 || x[0] >= SCREEN_WIDTH || y[0] < 0 || y[0] >= SCREEN_HEIGHT) {
             state.setRunning(false);
         }
 
@@ -201,9 +204,28 @@ public class GamePanel extends JPanel implements ActionListener {
                     if (state.getDirection() != 'U')
                         state.setDirection('D');
                     break;
-                default:
-                    break;
             }
+        }
+    }
+
+    public void updateDirection() {
+        switch (ai.predictedDirection()) {
+            case 'L':
+                if (state.getDirection() != 'R')
+                    state.setDirection('L');
+                break;
+            case 'R':
+                if (state.getDirection() != 'L')
+                    state.setDirection('R');
+                break;
+            case 'U':
+                if (state.getDirection() != 'D')
+                    state.setDirection('U');
+                break;
+            case 'D':
+                if (state.getDirection() != 'U')
+                    state.setDirection('D');
+                break;
         }
     }
 }
