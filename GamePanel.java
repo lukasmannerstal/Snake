@@ -8,7 +8,6 @@ import java.util.Random;
  *
  * @author Lukas Mannerstål
  * @version 2024-11-30
- * @credits The base model of the game took inspiration from: https://youtu.be/bI6e6qjJ8JQ
  */
 public class GamePanel extends JPanel implements ActionListener {
 
