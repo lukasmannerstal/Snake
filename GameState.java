@@ -1,3 +1,6 @@
+import java.util.HashMap;
+import java.util.Map;
+
 /**
  * The GameState class stores values for the current state of the game.
  *
@@ -8,8 +11,7 @@ public class GameState {
 
     private int bodyParts;
     private int applesEaten;
-    private int appleX;
-    private int appleY;
+    private Map<Integer, int[]> apples;
     char direction;
     boolean running;
 
@@ -17,6 +19,7 @@ public class GameState {
         this.bodyParts = 6;
         this.direction = 'R';
         this.running = false;
+        this.apples = new HashMap<>();
     }
 
     public int getBodyParts() {
@@ -35,20 +38,16 @@ public class GameState {
         this.applesEaten = applesEaten;
     }
 
-    public int getAppleX() {
-        return appleX;
+    public Map<Integer, int[]> getApples() {
+        return apples;
     }
 
-    public void setAppleX(int appleX) {
-        this.appleX = appleX;
+    public void addApple(int id, int x, int y) {
+        apples.put(id, new int[]{x, y});
     }
 
-    public int getAppleY() {
-        return appleY;
-    }
-
-    public void setAppleY(int appleY) {
-        this.appleY = appleY;
+    public void removeApple(int id) {
+        apples.remove(id);
     }
 
     public char getDirection() {

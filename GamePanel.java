@@ -1,6 +1,9 @@
 import java.awt.*;
 import java.awt.event.*;
 import javax.swing.*;
+
+import java.util.ArrayList;
+import java.util.Map;
 import java.util.Random;
 
 /**
@@ -33,18 +36,27 @@ public class GamePanel extends JPanel implements ActionListener {
     Random random;
     GameState state;
 
+    /**
+     * Colors
+     */
+    static final Color BACKGROUND_COLOR = new Color(0, 0, 0);
+    static final Color HEAD_COLOR = new Color(239, 170, 33);
+    static final Color BODY_COLOR = new Color(87, 45, 106);
+    static final Color APPLE_COLOR = new Color(145, 39, 53);
+
     GamePanel() {
         random = new Random();
         state = new GameState();
         this.setPreferredSize(new Dimension(SCREEN_WIDTH, SCREEN_HEIGHT));
-        this.setBackground(Color.black);
+        this.setBackground(BACKGROUND_COLOR);
         this.setFocusable(true);
         this.addKeyListener(new MyKeyAdapter());
         startGame();
     }
 
     public void startGame() {
-        newApple();
+        resetSnake();
+        newApples(5);
         state.setRunning(true);
         timer = new Timer(DELAY, this);
         timer.start();
@@ -56,27 +68,40 @@ public class GamePanel extends JPanel implements ActionListener {
     }
 
     public void draw(Graphics g) {
-        if(state.getRunning()) {
-            g.setColor(Color.red);
-            g.fillRect(state.getAppleX(), state.getAppleY(), UNIT_SIZE, UNIT_SIZE);
+        if (state.getRunning()) {
+            g.setColor(APPLE_COLOR);
+            for (int[] apple : state.getApples().values()) {
+                g.fillRect(apple[0], apple[1], UNIT_SIZE, UNIT_SIZE);
+            }
 
             for (int i = 0; i < state.getBodyParts(); i++) {
                 if (i == 0) {
-                    g.setColor(Color.green);
+                    g.setColor(HEAD_COLOR);
                     g.fillRect(x[i], y[i], UNIT_SIZE, UNIT_SIZE);
                 } else {
-                    g.setColor(Color.blue);
+                    g.setColor(BODY_COLOR);
                     g.fillRect(x[i], y[i], UNIT_SIZE, UNIT_SIZE);
                 }
             }
         } else {
-            gameOver(g);
+            gameOver();
         }
     }
 
-    public void newApple() {
-        state.setAppleX(random.nextInt((int) (SCREEN_WIDTH / UNIT_SIZE)) * UNIT_SIZE);
-        state.setAppleY(random.nextInt((int) (SCREEN_HEIGHT / UNIT_SIZE)) * UNIT_SIZE);
+    public void resetSnake() {
+        for (int i = 0; i < state.getBodyParts(); i++) {
+            x[i] = 0;
+            y[i] = 0;
+        }
+    }
+
+    public void newApples(int count) {
+        state.getApples().clear();
+        for (int i = 0; i < count; i++) {
+            int appleX = random.nextInt(SCREEN_WIDTH / UNIT_SIZE) * UNIT_SIZE;
+            int appleY = random.nextInt(SCREEN_HEIGHT / UNIT_SIZE) * UNIT_SIZE;
+            state.addApple(i, appleX, appleY);
+        }
     }
 
     public void move() {
@@ -102,10 +127,24 @@ public class GamePanel extends JPanel implements ActionListener {
     }
 
     public void checkApple() {
-        if((x[0] == state.getAppleX()) && (y[0] == state.getAppleY())) {
-            state.setBodyParts(state.getBodyParts() + 1);
-            state.setApplesEaten(state.getApplesEaten() + 1);
-            newApple();
+        ArrayList<Integer> applesToRemove = new ArrayList<>();
+
+        for (Map.Entry<Integer, int[]> entry : state.getApples().entrySet()) {
+            int id = entry.getKey();
+            int[] apple = entry.getValue();
+
+            if (x[0] == apple[0] && y[0] == apple[1]) {
+                state.setBodyParts(state.getBodyParts() + 1);
+                state.setApplesEaten(state.getApplesEaten() + 1);
+                applesToRemove.add(id);
+            }
+        }
+
+        for (int id : applesToRemove) {
+            state.removeApple(id);
+            int newAppleX = random.nextInt(SCREEN_WIDTH / UNIT_SIZE) * UNIT_SIZE;
+            int newAppleY = random.nextInt(SCREEN_HEIGHT / UNIT_SIZE) * UNIT_SIZE;
+            state.addApple(id, newAppleX, newAppleY);
         }
     }
 
@@ -125,8 +164,10 @@ public class GamePanel extends JPanel implements ActionListener {
         }
     }
 
-    public void gameOver(Graphics g) {
-        System.exit(0);
+    public void gameOver() {
+        state = new GameState();
+        timer.stop();
+        startGame();
     }
 
     @Override
