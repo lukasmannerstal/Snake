@@ -1,2 +1,2 @@
 # Snake
-A snake game project made in java.
+A snake game project made in java..
